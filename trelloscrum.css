@@ -87,3 +87,7 @@
     margin-top:1px;
 }
 /* == end b4t integration == */
+
+.list.over-limit {
+	background-color: #ff8a80;
+}

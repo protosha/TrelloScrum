@@ -489,11 +489,24 @@ function List(el){
 	if(el.list)return;
 	el.list=this;
 
+	this.el = el;
+	this.getEl = function() {
+		return this.el;
+	};
+
 	var $list=$(el),
 		$total=$('<span class="list-total">'),
+		$max_total = $('<span class="list-max-total">'),
+		$list_title = $list.find('.list-title,.list-header'),
 		busy = false,
 		to,
 		to2;
+	this.score = null;
+	this.max_score = null;
+
+	if (!$.contains($list_title, $max_total)) {
+		$list_title.append($max_total);
+	}
 
 	function readCard($c){
 		if($c.target) {
@@ -510,14 +523,33 @@ function List(el){
 
 	// All calls to calc are throttled to happen no more than once every 500ms (makes page-load and recalculations much faster).
 	var self = this;
+	this.refresh = function() {
+		var $header_title = $list.find('.list-header-name-assist');
+		var list_name = $header_title.text();
+		var parse_reg = /\[(\d+)(?:-(\d+))?\]/;
+		var parts = list_name.match(parse_reg);
+		self.max_score = (parts)? parts[1] : Number.MAX_VALUE;
+
+		console.log(self.max_score);
+		console.log(self.score);
+		console.log(parts);
+		if (self.getEl() && self.score > self.max_score) {
+			$list.addClass('over-limit');
+			$max_total.text('Maximum point count: 30');
+		} else {
+			$list.removeClass('over-limit');
+			$max_total.empty();
+		}
+	};
+
 	this.calc = debounce(function(){
-		self._calcInner();
+		self._calcInner(self.refresh);
     }, 500, true); // executes right away unless over its 500ms threshold since the last execution
-	this._calcInner	= function(e){ // don't call this directly. Call calc() instead.
+	this._calcInner	= function(callback){ // don't call this directly. Call calc() instead.
 		//if(e&&e.target&&!$(e.target).hasClass('list-card')) return; // TODO: REMOVE - What was this? We never pass a param into this function.
 		clearTimeout(to);
 		to = setTimeout(function(){
-			$total.empty().appendTo($list.find('.list-title,.list-header'));
+			$total.empty().appendTo($list_title);
 			for (var i in _pointsAttr){
 				var score=0,
 					attr = _pointsAttr[i];
@@ -530,10 +562,12 @@ function List(el){
 						}
 					}
 				});
+				self.score = score;
 				var scoreTruncated = round(score);
 				var scoreSpan = $('<span/>', {class: attr}).text( (scoreTruncated>0) ? scoreTruncated : '' );
 				$total.append(scoreSpan);
 				computeTotal();
+				callback();
 			}
 		});
 	};
