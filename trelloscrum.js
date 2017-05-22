@@ -530,12 +530,9 @@ function List(el){
 		var parts = list_name.match(parse_reg);
 		self.max_score = (parts)? parts[1] : Number.MAX_VALUE;
 
-		console.log(self.max_score);
-		console.log(self.score);
-		console.log(parts);
 		if (self.getEl() && self.score > self.max_score) {
 			$list.addClass('over-limit');
-			$max_total.text('Maximum point count: 30');
+			$max_total.text('Maximum point count: ' + self.max_score);
 		} else {
 			$list.removeClass('over-limit');
 			$max_total.empty();
